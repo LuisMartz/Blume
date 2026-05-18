@@ -2,6 +2,7 @@ import cors from 'cors'
 import dotenv from 'dotenv'
 import express, { type ErrorRequestHandler } from 'express'
 import { ZodError } from 'zod'
+import { authRouter } from './routes/auth.routes.js'
 import { catalogRouter } from './routes/catalog.routes.js'
 import { clientsRouter } from './routes/clients.routes.js'
 import { quotesRouter } from './routes/quotes.routes.js'
@@ -10,10 +11,15 @@ dotenv.config()
 
 const app = express()
 const port = Number(process.env.PORT ?? 4000)
+const allowedOrigins = [
+  process.env.WEB_ORIGIN,
+  'http://127.0.0.1:5173',
+  'http://localhost:5173',
+].filter((origin): origin is string => Boolean(origin))
 
 app.use(
   cors({
-    origin: process.env.WEB_ORIGIN ?? 'http://127.0.0.1:5173',
+    origin: allowedOrigins,
   }),
 )
 app.use(express.json())
@@ -22,6 +28,7 @@ app.get('/api/health', (_req, res) => {
   res.json({ status: 'ok' })
 })
 
+app.use('/api/auth', authRouter)
 app.use('/api/clients', clientsRouter)
 app.use('/api/catalog', catalogRouter)
 app.use('/api/quotes', quotesRouter)

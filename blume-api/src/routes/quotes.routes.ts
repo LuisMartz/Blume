@@ -29,20 +29,28 @@ quotesRouter.post('/', async (req, res, next) => {
       return {
         catalogItemId: item.catalogItemId,
         name: item.name,
+        description: item.description,
         quantity: item.quantity,
         unitPrice: item.unitPrice.toString(),
         total: total.toString(),
       }
     })
-    const amount = items.reduce((sum, item) => sum + Number(item.total), 0)
+    const subtotal = items.reduce((sum, item) => sum + Number(item.total), 0)
+    const taxAmount = subtotal * (data.taxRate / 100)
+    const total = subtotal + taxAmount
 
     const quote = await prisma.quote.create({
       data: {
         code: data.code,
         clientId: data.clientId,
         date: data.date,
-        amount: amount.toString(),
+        validUntil: data.validUntil,
         status: data.status,
+        subtotal: subtotal.toString(),
+        taxRate: data.taxRate.toString(),
+        taxAmount: taxAmount.toString(),
+        total: total.toString(),
+        notes: data.notes,
         items: {
           create: items,
         },
@@ -66,7 +74,10 @@ quotesRouter.patch('/:id', async (req, res, next) => {
       where: { id: req.params.id },
       data: {
         ...data,
-        amount: data.amount == null ? data.amount : data.amount.toString(),
+        subtotal: data.subtotal == null ? data.subtotal : data.subtotal.toString(),
+        taxRate: data.taxRate == null ? data.taxRate : data.taxRate.toString(),
+        taxAmount: data.taxAmount == null ? data.taxAmount : data.taxAmount.toString(),
+        total: data.total == null ? data.total : data.total.toString(),
       },
       include: {
         client: true,

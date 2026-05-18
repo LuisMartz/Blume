@@ -1,10 +1,35 @@
+import { useQuery } from '@tanstack/react-query'
 import { Download, Eye, Search, Send } from 'lucide-react'
+import { formatCurrency, formatDate, quoteStatusLabel } from '../api/format'
+import { getQuotes } from '../api/queries/quotes'
+import type { QuoteStatus } from '../api/types'
 import { Badge } from '../components/ui/Badge'
 import { Card } from '../components/ui/Card'
 import { PageHeader } from '../components/ui/PageHeader'
-import { quotes } from '../data/mockData'
+import { StateBlock } from '../components/ui/StateBlock'
+
+function quoteStatusTone(status: QuoteStatus) {
+  if (status === 'ACCEPTED') {
+    return 'active'
+  }
+
+  if (status === 'DRAFT') {
+    return 'neutral'
+  }
+
+  if (status === 'REJECTED') {
+    return 'danger'
+  }
+
+  return 'pending'
+}
 
 export function QuotesPage() {
+  const { data: quotes = [], isLoading, isError } = useQuery({
+    queryKey: ['quotes'],
+    queryFn: getQuotes,
+  })
+
   return (
     <div>
       <PageHeader
@@ -31,54 +56,77 @@ export function QuotesPage() {
             <option>Borrador</option>
           </select>
         </div>
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-[680px] text-left text-sm">
-            <thead className="bg-slate-50 text-xs uppercase text-slate-500">
-              <tr>
-                <th className="px-4 py-3 font-medium sm:px-5">Código</th>
-                <th className="px-4 py-3 font-medium sm:px-5">Cliente</th>
-                <th className="px-4 py-3 font-medium sm:px-5">Fecha</th>
-                <th className="px-4 py-3 font-medium sm:px-5">Importe</th>
-                <th className="px-4 py-3 font-medium sm:px-5">Estado</th>
-                <th className="px-4 py-3 text-right font-medium sm:px-5">Acciones</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {quotes.map((quote) => (
-                <tr key={quote.code}>
-                  <td className="px-4 py-4 font-medium text-slate-950 sm:px-5">{quote.code}</td>
-                  <td className="px-4 py-4 text-slate-600 sm:px-5">{quote.client}</td>
-                  <td className="px-4 py-4 text-slate-600 sm:px-5">{quote.date}</td>
-                  <td className="px-4 py-4 text-slate-600 sm:px-5">{quote.amount}</td>
-                  <td className="px-4 py-4 sm:px-5">
-                    <Badge tone={quote.status === 'Aceptado' ? 'active' : quote.status === 'Borrador' ? 'neutral' : 'pending'}>
-                      {quote.status}
-                    </Badge>
-                  </td>
-                  <td className="px-4 py-4 sm:px-5">
-                    <div className="flex justify-end gap-2">
-                      {[
-                        { label: 'Ver presupuesto', icon: Eye },
-                        { label: 'Enviar presupuesto', icon: Send },
-                        { label: 'Descargar presupuesto', icon: Download },
-                      ].map((action) => (
-                        <button
-                          key={action.label}
-                          type="button"
-                          className="grid size-9 place-items-center rounded-md border border-slate-200 text-slate-600 transition hover:bg-slate-50"
-                          aria-label={action.label}
-                          title={action.label}
-                        >
-                          <action.icon className="size-4" aria-hidden="true" />
-                        </button>
-                      ))}
-                    </div>
-                  </td>
+
+        {isLoading ? (
+          <div className="p-4">
+            <StateBlock title="Cargando presupuestos" description="Leyendo propuestas desde Neon." />
+          </div>
+        ) : isError ? (
+          <div className="p-4">
+            <StateBlock
+              title="No se pudieron cargar los presupuestos"
+              description="Comprueba que blume-api esté arrancada en el puerto 4000."
+            />
+          </div>
+        ) : quotes.length === 0 ? (
+          <div className="p-4">
+            <StateBlock
+              title="Todavía no hay presupuestos"
+              description="Crea una propuesta a partir de un cliente y servicios del catálogo."
+            />
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[760px] text-left text-sm">
+              <thead className="bg-slate-50 text-xs uppercase text-slate-500">
+                <tr>
+                  <th className="px-4 py-3 font-medium sm:px-5">Código</th>
+                  <th className="px-4 py-3 font-medium sm:px-5">Cliente</th>
+                  <th className="px-4 py-3 font-medium sm:px-5">Fecha</th>
+                  <th className="px-4 py-3 font-medium sm:px-5">Subtotal</th>
+                  <th className="px-4 py-3 font-medium sm:px-5">Total</th>
+                  <th className="px-4 py-3 font-medium sm:px-5">Estado</th>
+                  <th className="px-4 py-3 text-right font-medium sm:px-5">Acciones</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {quotes.map((quote) => (
+                  <tr key={quote.id}>
+                    <td className="px-4 py-4 font-medium text-slate-950 sm:px-5">{quote.code}</td>
+                    <td className="px-4 py-4 text-slate-600 sm:px-5">{quote.client.name}</td>
+                    <td className="px-4 py-4 text-slate-600 sm:px-5">{formatDate(quote.date)}</td>
+                    <td className="px-4 py-4 text-slate-600 sm:px-5">{formatCurrency(quote.subtotal)}</td>
+                    <td className="px-4 py-4 text-slate-600 sm:px-5">{formatCurrency(quote.total)}</td>
+                    <td className="px-4 py-4 sm:px-5">
+                      <Badge tone={quoteStatusTone(quote.status)}>
+                        {quoteStatusLabel(quote.status)}
+                      </Badge>
+                    </td>
+                    <td className="px-4 py-4 sm:px-5">
+                      <div className="flex justify-end gap-2">
+                        {[
+                          { label: 'Ver presupuesto', icon: Eye },
+                          { label: 'Enviar presupuesto', icon: Send },
+                          { label: 'Descargar presupuesto', icon: Download },
+                        ].map((action) => (
+                          <button
+                            key={action.label}
+                            type="button"
+                            className="grid size-9 place-items-center rounded-md border border-slate-200 text-slate-600 transition hover:bg-slate-50"
+                            aria-label={action.label}
+                            title={action.label}
+                          >
+                            <action.icon className="size-4" aria-hidden="true" />
+                          </button>
+                        ))}
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </Card>
     </div>
   )

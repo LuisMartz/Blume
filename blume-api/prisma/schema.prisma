@@ -7,45 +7,117 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model Client {
-  id        String   @id @default(cuid())
-  name      String
-  contact   String?
-  email     String?
-  phone     String?
-  value     Decimal? @db.Decimal(10, 2)
-  status    String   @default("Activo")
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+enum ClientStatus {
+  ACTIVE
+  PENDING
+  INACTIVE
+}
 
-  quotes    Quote[]
+enum CatalogStatus {
+  ACTIVE
+  DRAFT
+  ARCHIVED
+}
+
+enum QuoteStatus {
+  DRAFT
+  SENT
+  REVISION
+  ACCEPTED
+  REJECTED
+}
+
+model User {
+  id           String    @id @default(cuid())
+  name         String
+  email        String    @unique
+  passwordHash String
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  sessions     Session[]
+
+  @@index([email])
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  userId    String
+  tokenHash String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+model Client {
+  id         String       @id @default(cuid())
+  name       String
+  contact    String?
+  email      String?
+  phone      String?
+  taxId      String?
+  address    String?
+  city       String?
+  postalCode String?
+  country    String       @default("España")
+  value      Decimal?     @db.Decimal(10, 2)
+  status     ClientStatus @default(ACTIVE)
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @updatedAt
+
+  quotes     Quote[]
+
+  @@index([name])
+  @@index([status])
+  @@index([email])
 }
 
 model CatalogItem {
-  id         String   @id @default(cuid())
-  name       String
-  category   String
-  price      Decimal  @db.Decimal(10, 2)
-  margin     Int?
-  status     String   @default("Activo")
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  id          String        @id @default(cuid())
+  name        String
+  description String?
+  category    String
+  unit        String        @default("unidad")
+  price       Decimal       @db.Decimal(10, 2)
+  margin      Int?
+  status      CatalogStatus @default(ACTIVE)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
 
-  quoteItems QuoteItem[]
+  quoteItems  QuoteItem[]
+
+  @@index([name])
+  @@index([category])
+  @@index([status])
 }
 
 model Quote {
-  id        String   @id @default(cuid())
-  code      String   @unique
-  clientId  String
-  date      DateTime @default(now())
-  amount    Decimal  @db.Decimal(10, 2)
-  status    String   @default("Borrador")
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id         String      @id @default(cuid())
+  code       String      @unique
+  clientId   String
+  date       DateTime    @default(now())
+  validUntil DateTime?
+  status     QuoteStatus @default(DRAFT)
 
-  client    Client      @relation(fields: [clientId], references: [id], onDelete: Cascade)
-  items     QuoteItem[]
+  subtotal   Decimal     @default(0) @db.Decimal(10, 2)
+  taxRate    Decimal     @default(21) @db.Decimal(5, 2)
+  taxAmount  Decimal     @default(0) @db.Decimal(10, 2)
+  total      Decimal     @default(0) @db.Decimal(10, 2)
+
+  notes      String?
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+
+  client     Client      @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  items      QuoteItem[]
+
+  @@index([clientId])
+  @@index([status])
+  @@index([date])
 }
 
 model QuoteItem {
@@ -53,10 +125,14 @@ model QuoteItem {
   quoteId       String
   catalogItemId String?
   name          String
+  description   String?
   quantity      Int     @default(1)
   unitPrice     Decimal @db.Decimal(10, 2)
   total         Decimal @db.Decimal(10, 2)
 
   quote       Quote        @relation(fields: [quoteId], references: [id], onDelete: Cascade)
-  catalogItem CatalogItem? @relation(fields: [catalogItemId], references: [id])
+  catalogItem CatalogItem? @relation(fields: [catalogItemId], references: [id], onDelete: SetNull)
+
+  @@index([quoteId])
+  @@index([catalogItemId])
 }

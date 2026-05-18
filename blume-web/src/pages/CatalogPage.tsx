@@ -1,10 +1,31 @@
+import { useQuery } from '@tanstack/react-query'
 import { Search } from 'lucide-react'
+import { catalogStatusLabel, formatCurrency } from '../api/format'
+import { getCatalogItems } from '../api/queries/catalog'
+import type { CatalogStatus } from '../api/types'
 import { Badge } from '../components/ui/Badge'
 import { Card } from '../components/ui/Card'
 import { PageHeader } from '../components/ui/PageHeader'
-import { catalogItems } from '../data/mockData'
+import { StateBlock } from '../components/ui/StateBlock'
+
+function catalogStatusTone(status: CatalogStatus) {
+  if (status === 'ACTIVE') {
+    return 'active'
+  }
+
+  if (status === 'ARCHIVED') {
+    return 'neutral'
+  }
+
+  return 'pending'
+}
 
 export function CatalogPage() {
+  const { data: catalogItems = [], isLoading, isError } = useQuery({
+    queryKey: ['catalog'],
+    queryFn: getCatalogItems,
+  })
+
   return (
     <div>
       <PageHeader
@@ -30,34 +51,56 @@ export function CatalogPage() {
             <option>Retainer</option>
           </select>
         </div>
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-[620px] text-left text-sm">
-            <thead className="bg-slate-50 text-xs uppercase text-slate-500">
-              <tr>
-                <th className="px-4 py-3 font-medium sm:px-5">Nombre</th>
-                <th className="px-4 py-3 font-medium sm:px-5">Categoría</th>
-                <th className="px-4 py-3 font-medium sm:px-5">Precio</th>
-                <th className="px-4 py-3 font-medium sm:px-5">Margen</th>
-                <th className="px-4 py-3 font-medium sm:px-5">Estado</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {catalogItems.map((item) => (
-                <tr key={item.name}>
-                  <td className="px-4 py-4 font-medium text-slate-950 sm:px-5">{item.name}</td>
-                  <td className="px-4 py-4 text-slate-600 sm:px-5">{item.category}</td>
-                  <td className="px-4 py-4 text-slate-600 sm:px-5">{item.price}</td>
-                  <td className="px-4 py-4 text-slate-600 sm:px-5">{item.margin}</td>
-                  <td className="px-4 py-4 sm:px-5">
-                    <Badge tone={item.status === 'Activo' ? 'active' : 'neutral'}>
-                      {item.status}
-                    </Badge>
-                  </td>
+        {isLoading ? (
+          <div className="p-4">
+            <StateBlock title="Cargando catálogo" description="Leyendo servicios desde Neon." />
+          </div>
+        ) : isError ? (
+          <div className="p-4">
+            <StateBlock
+              title="No se pudo cargar el catálogo"
+              description="Comprueba que blume-api esté arrancada en el puerto 4000."
+            />
+          </div>
+        ) : catalogItems.length === 0 ? (
+          <div className="p-4">
+            <StateBlock title="Catálogo vacío" description="Añade servicios para crear presupuestos." />
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[700px] text-left text-sm">
+              <thead className="bg-slate-50 text-xs uppercase text-slate-500">
+                <tr>
+                  <th className="px-4 py-3 font-medium sm:px-5">Nombre</th>
+                  <th className="px-4 py-3 font-medium sm:px-5">Categoría</th>
+                  <th className="px-4 py-3 font-medium sm:px-5">Unidad</th>
+                  <th className="px-4 py-3 font-medium sm:px-5">Precio</th>
+                  <th className="px-4 py-3 font-medium sm:px-5">Margen</th>
+                  <th className="px-4 py-3 font-medium sm:px-5">Estado</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {catalogItems.map((item) => (
+                  <tr key={item.id}>
+                    <td className="px-4 py-4 sm:px-5">
+                      <p className="font-medium text-slate-950">{item.name}</p>
+                      <p className="mt-1 max-w-sm text-xs text-slate-500">{item.description}</p>
+                    </td>
+                    <td className="px-4 py-4 text-slate-600 sm:px-5">{item.category}</td>
+                    <td className="px-4 py-4 text-slate-600 sm:px-5">{item.unit}</td>
+                    <td className="px-4 py-4 text-slate-600 sm:px-5">{formatCurrency(item.price)}</td>
+                    <td className="px-4 py-4 text-slate-600 sm:px-5">{item.margin ?? '-'}%</td>
+                    <td className="px-4 py-4 sm:px-5">
+                      <Badge tone={catalogStatusTone(item.status)}>
+                        {catalogStatusLabel(item.status)}
+                      </Badge>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </Card>
     </div>
   )
