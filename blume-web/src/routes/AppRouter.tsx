@@ -1,9 +1,12 @@
-import { createBrowserRouter, RouterProvider } from 'react-router-dom'
+import { Navigate, createBrowserRouter, RouterProvider } from 'react-router-dom'
 import { AppLayout } from '../layouts/AppLayout'
+import { CatalogPage } from '../pages/CatalogPage'
 import { ClientsPage } from '../pages/ClientsPage'
 import { DashboardPage } from '../pages/DashboardPage'
-import { ProductsPage } from '../pages/ProductsPage'
 import { QuotesPage } from '../pages/QuotesPage'
+import { ReportsPage } from '../pages/ReportsPage'
+import { SettingsPage } from '../pages/SettingsPage'
+import { TasksPage } from '../pages/TasksPage'
 
 const router = createBrowserRouter([
   {
@@ -12,6 +15,10 @@ const router = createBrowserRouter([
     children: [
       {
         index: true,
+        element: <Navigate to="/dashboard" replace />,
+      },
+      {
+        path: 'dashboard',
         element: <DashboardPage />,
       },
       {
@@ -19,12 +26,24 @@ const router = createBrowserRouter([
         element: <ClientsPage />,
       },
       {
-        path: 'products',
-        element: <ProductsPage />,
+        path: 'catalog',
+        element: <CatalogPage />,
       },
       {
         path: 'quotes',
         element: <QuotesPage />,
+      },
+      {
+        path: 'tasks',
+        element: <TasksPage />,
+      },
+      {
+        path: 'reports',
+        element: <ReportsPage />,
+      },
+      {
+        path: 'settings',
+        element: <SettingsPage />,
       },
     ],
   },

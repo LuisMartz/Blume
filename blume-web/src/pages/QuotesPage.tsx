@@ -1,13 +1,8 @@
-import { Download, Eye, Send } from 'lucide-react'
+import { Download, Eye, Search, Send } from 'lucide-react'
+import { Badge } from '../components/ui/Badge'
+import { Card } from '../components/ui/Card'
 import { PageHeader } from '../components/ui/PageHeader'
-import { StatusBadge } from '../components/ui/StatusBadge'
-
-const quotes = [
-  { code: 'BL-2026-018', client: 'Acme Studio', date: '18 may 2026', amount: '3.450 €', status: 'Enviado' },
-  { code: 'BL-2026-017', client: 'Norte Dental', date: '16 may 2026', amount: '1.280 €', status: 'Aceptado' },
-  { code: 'BL-2026-016', client: 'Verde Home', date: '14 may 2026', amount: '5.900 €', status: 'Revisión' },
-  { code: 'BL-2026-015', client: 'Atlas Legal', date: '10 may 2026', amount: '860 €', status: 'Borrador' },
-]
+import { quotes } from '../data/mockData'
 
 export function QuotesPage() {
   return (
@@ -16,34 +11,51 @@ export function QuotesPage() {
         title="Presupuestos"
         description="Seguimiento de propuestas, importes y acciones rápidas para cada oportunidad."
         action="Crear presupuesto"
+        secondaryAction="Nuevo cliente"
       />
 
-      <article className="rounded-lg border border-slate-200 bg-white">
+      <Card>
+        <div className="flex flex-col gap-3 border-b border-slate-200 p-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="relative max-w-sm flex-1">
+            <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-400" />
+            <input
+              className="h-10 w-full rounded-md border border-slate-200 bg-slate-50 pl-10 pr-3 text-sm outline-none focus:border-emerald-500 focus:bg-white focus:ring-2 focus:ring-emerald-100"
+              placeholder="Filtrar presupuestos"
+              type="search"
+            />
+          </div>
+          <select className="h-10 rounded-md border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none">
+            <option>Todos los estados</option>
+            <option>Enviado</option>
+            <option>Aceptado</option>
+            <option>Borrador</option>
+          </select>
+        </div>
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[780px] text-left text-sm">
+          <table className="w-full min-w-[680px] text-left text-sm">
             <thead className="bg-slate-50 text-xs uppercase text-slate-500">
               <tr>
-                <th className="px-5 py-3 font-medium">Código</th>
-                <th className="px-5 py-3 font-medium">Cliente</th>
-                <th className="px-5 py-3 font-medium">Fecha</th>
-                <th className="px-5 py-3 font-medium">Importe</th>
-                <th className="px-5 py-3 font-medium">Estado</th>
-                <th className="px-5 py-3 text-right font-medium">Acciones</th>
+                <th className="px-4 py-3 font-medium sm:px-5">Código</th>
+                <th className="px-4 py-3 font-medium sm:px-5">Cliente</th>
+                <th className="px-4 py-3 font-medium sm:px-5">Fecha</th>
+                <th className="px-4 py-3 font-medium sm:px-5">Importe</th>
+                <th className="px-4 py-3 font-medium sm:px-5">Estado</th>
+                <th className="px-4 py-3 text-right font-medium sm:px-5">Acciones</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {quotes.map((quote) => (
                 <tr key={quote.code}>
-                  <td className="px-5 py-4 font-medium text-slate-950">{quote.code}</td>
-                  <td className="px-5 py-4 text-slate-600">{quote.client}</td>
-                  <td className="px-5 py-4 text-slate-600">{quote.date}</td>
-                  <td className="px-5 py-4 text-slate-600">{quote.amount}</td>
-                  <td className="px-5 py-4">
-                    <StatusBadge tone={quote.status === 'Aceptado' ? 'active' : quote.status === 'Borrador' ? 'neutral' : 'pending'}>
+                  <td className="px-4 py-4 font-medium text-slate-950 sm:px-5">{quote.code}</td>
+                  <td className="px-4 py-4 text-slate-600 sm:px-5">{quote.client}</td>
+                  <td className="px-4 py-4 text-slate-600 sm:px-5">{quote.date}</td>
+                  <td className="px-4 py-4 text-slate-600 sm:px-5">{quote.amount}</td>
+                  <td className="px-4 py-4 sm:px-5">
+                    <Badge tone={quote.status === 'Aceptado' ? 'active' : quote.status === 'Borrador' ? 'neutral' : 'pending'}>
                       {quote.status}
-                    </StatusBadge>
+                    </Badge>
                   </td>
-                  <td className="px-5 py-4">
+                  <td className="px-4 py-4 sm:px-5">
                     <div className="flex justify-end gap-2">
                       {[
                         { label: 'Ver presupuesto', icon: Eye },
@@ -67,7 +79,7 @@ export function QuotesPage() {
             </tbody>
           </table>
         </div>
-      </article>
+      </Card>
     </div>
   )
 }
