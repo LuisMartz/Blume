@@ -3,6 +3,8 @@ type PageHeaderProps = {
   description: string
   action?: string
   secondaryAction?: string
+  onAction?: () => void
+  onSecondaryAction?: () => void
 }
 
 export function PageHeader({
@@ -10,11 +12,13 @@ export function PageHeader({
   description,
   action,
   secondaryAction,
+  onAction,
+  onSecondaryAction,
 }: PageHeaderProps) {
   return (
     <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
       <div>
-        <h1 className="text-2xl font-semibold tracking-normal text-slate-950">
+        <h1 className="font-display text-3xl text-slate-950">
           {title}
         </h1>
         <p className="mt-1 max-w-2xl text-sm text-slate-500">{description}</p>
@@ -24,7 +28,8 @@ export function PageHeader({
           {secondaryAction ? (
             <button
               type="button"
-              className="inline-flex h-10 items-center justify-center rounded-md border border-slate-200 bg-white px-4 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
+              onClick={onSecondaryAction}
+              className="inline-flex h-10 items-center justify-center rounded-md border border-[var(--border)] bg-white px-4 text-sm font-medium text-slate-700 transition hover:bg-[var(--surface)]"
             >
               {secondaryAction}
             </button>
@@ -32,7 +37,8 @@ export function PageHeader({
           {action ? (
             <button
               type="button"
-              className="inline-flex h-10 items-center justify-center rounded-md bg-emerald-600 px-4 text-sm font-medium text-white transition hover:bg-emerald-700"
+              onClick={onAction}
+              className="inline-flex h-10 items-center justify-center rounded-md bg-[var(--brand)] px-4 text-sm font-medium text-white transition hover:opacity-90"
             >
               {action}
             </button>

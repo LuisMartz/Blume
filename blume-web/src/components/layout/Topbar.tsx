@@ -1,45 +1,78 @@
-import { Bell, Search } from 'lucide-react'
-import { NavLink } from 'react-router-dom'
+import { Bell, LogOut, Plus, Search } from 'lucide-react'
+import { NavLink, useLocation, useNavigate } from 'react-router-dom'
+import { clearSession, getStoredUser } from '../../api/session'
 import { navigation } from '../../data/navigation'
+import { BlumeLogo } from '../brand/BlumeLogo'
 
 export function Topbar() {
+  const location = useLocation()
+  const navigate = useNavigate()
+  const user = getStoredUser()
+  const active = navigation.find((item) => location.pathname.startsWith(item.href))
+  const title = active?.name ?? 'Panel'
+  const initials = user?.name
+    .split(' ')
+    .map((part) => part[0])
+    .join('')
+    .slice(0, 2)
+    .toUpperCase() ?? 'BL'
+
   return (
-    <header className="sticky top-0 z-10 border-b border-slate-200 bg-white/95 backdrop-blur">
-      <div className="flex h-16 items-center gap-4 px-4 sm:px-6 lg:px-8">
+    <header className="sticky top-0 z-10 border-b border-[var(--border)] bg-[var(--background)]/85 backdrop-blur">
+      <div className="flex h-16 items-center gap-4 px-4 sm:px-6">
         <div className="flex items-center gap-2 lg:hidden">
-          <div className="grid size-9 place-items-center rounded-md bg-emerald-600 text-sm font-bold text-white">
-            B
-          </div>
+          <BlumeLogo className="h-8 w-8" />
           <span className="font-semibold">Blume</span>
         </div>
 
-        <div className="relative hidden max-w-md flex-1 sm:block">
-          <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-400" />
-          <input
-            className="h-10 w-full rounded-md border border-slate-200 bg-slate-50 pl-10 pr-3 text-sm outline-none transition placeholder:text-slate-400 focus:border-emerald-500 focus:bg-white focus:ring-2 focus:ring-emerald-100"
-            placeholder="Buscar clientes, servicios o presupuestos"
-            type="search"
-          />
+        <div className="hidden lg:block">
+          <p className="text-[11px] uppercase tracking-wider text-slate-500">Blume</p>
+          <h1 className="text-lg font-semibold leading-none">{title}</h1>
         </div>
 
-        <div className="ml-auto flex items-center gap-3">
+        <div className="ml-auto flex items-center gap-2">
+          <div className="relative hidden md:block">
+            <Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+            <input
+              className="h-9 w-72 rounded-md border border-[var(--border)] bg-white pl-8 pr-3 text-sm outline-none transition placeholder:text-slate-400 focus:border-[var(--brand)] focus:ring-2 focus:ring-emerald-100"
+              placeholder="Buscar clientes, presupuestos..."
+              type="search"
+            />
+          </div>
           <button
             type="button"
-            className="grid size-10 place-items-center rounded-md border border-slate-200 text-slate-600 transition hover:bg-slate-50"
+            className="grid h-9 w-9 place-items-center rounded-md text-slate-500 transition hover:bg-white"
             aria-label="Notificaciones"
           >
-            <Bell className="size-5" aria-hidden="true" />
+            <Bell className="h-4 w-4" aria-hidden="true" />
           </button>
-          <div className="hidden text-right sm:block">
-            <p className="text-sm font-medium">Luis</p>
-            <p className="text-xs text-slate-500">Administrador</p>
+          <button className="hidden h-9 items-center gap-1 rounded-md bg-[var(--brand)] px-3 text-sm font-medium text-white sm:inline-flex">
+            <Plus className="h-4 w-4" />
+            Crear
+          </button>
+          {user?.isDemo ? (
+            <span className="hidden rounded-full bg-[var(--brand-soft)] px-2.5 py-1 text-xs font-medium text-[var(--brand-deep)] sm:inline-flex">
+              Demo
+            </span>
+          ) : null}
+          <div className="grid h-9 w-9 place-items-center rounded-full bg-[var(--brand)] text-xs font-semibold text-white">
+            {initials}
           </div>
-          <div className="grid size-10 place-items-center rounded-md bg-slate-900 text-sm font-semibold text-white">
-            L
-          </div>
+          <button
+            type="button"
+            className="grid h-9 w-9 place-items-center rounded-md text-slate-500 transition hover:bg-white"
+            aria-label="Cerrar sesión"
+            onClick={() => {
+              clearSession()
+              navigate('/login')
+            }}
+          >
+            <LogOut className="h-4 w-4" aria-hidden="true" />
+          </button>
         </div>
       </div>
-      <nav className="flex gap-1 overflow-x-auto border-t border-slate-100 px-4 py-2 lg:hidden">
+
+      <nav className="flex gap-1 overflow-x-auto border-t border-[var(--border)] px-4 py-2 lg:hidden">
         {navigation.map((item) => (
           <NavLink
             key={item.name}
@@ -48,12 +81,12 @@ export function Topbar() {
               [
                 'flex shrink-0 items-center gap-2 rounded-md px-3 py-2 text-sm font-medium',
                 isActive
-                  ? 'bg-emerald-50 text-emerald-700'
-                  : 'text-slate-600 hover:bg-slate-100',
+                  ? 'bg-[var(--brand-soft)] text-[var(--brand-deep)]'
+                  : 'text-slate-500 hover:bg-white',
               ].join(' ')
             }
           >
-            <item.icon className="size-4" aria-hidden="true" />
+            <item.icon className="h-4 w-4" aria-hidden="true" />
             {item.name}
           </NavLink>
         ))}

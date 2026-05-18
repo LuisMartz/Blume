@@ -1,12 +1,16 @@
 import { Router } from 'express'
+import { getWorkspaceId, requireAuth } from '../auth.js'
 import { prisma } from '../prisma.js'
 import { quoteCreateSchema, quoteUpdateSchema } from '../validators/quote.schema.js'
 
 export const quotesRouter = Router()
+quotesRouter.use(requireAuth)
 
-quotesRouter.get('/', async (_req, res, next) => {
+quotesRouter.get('/', async (req, res, next) => {
   try {
+    const workspaceId = getWorkspaceId(req)
     const quotes = await prisma.quote.findMany({
+      where: { workspaceId },
       orderBy: { createdAt: 'desc' },
       include: {
         client: true,
@@ -22,7 +26,36 @@ quotesRouter.get('/', async (_req, res, next) => {
 
 quotesRouter.post('/', async (req, res, next) => {
   try {
+    const workspaceId = getWorkspaceId(req)
     const data = quoteCreateSchema.parse(req.body)
+    const client = await prisma.client.findUnique({
+      where: { id: data.clientId, workspaceId },
+      select: { id: true },
+    })
+
+    if (!client) {
+      res.status(400).json({ message: 'Cliente no válido para esta cuenta' })
+      return
+    }
+
+    const catalogItemIds = data.items
+      .map((item) => item.catalogItemId)
+      .filter((id): id is string => Boolean(id))
+
+    if (catalogItemIds.length > 0) {
+      const validCatalogItems = await prisma.catalogItem.count({
+        where: {
+          id: { in: catalogItemIds },
+          workspaceId,
+        },
+      })
+
+      if (validCatalogItems !== new Set(catalogItemIds).size) {
+        res.status(400).json({ message: 'Servicio no válido para esta cuenta' })
+        return
+      }
+    }
+
     const items = data.items.map((item) => {
       const total = item.quantity * item.unitPrice
 
@@ -42,6 +75,7 @@ quotesRouter.post('/', async (req, res, next) => {
     const quote = await prisma.quote.create({
       data: {
         code: data.code,
+        workspaceId,
         clientId: data.clientId,
         date: data.date,
         validUntil: data.validUntil,
@@ -69,9 +103,10 @@ quotesRouter.post('/', async (req, res, next) => {
 
 quotesRouter.patch('/:id', async (req, res, next) => {
   try {
+    const workspaceId = getWorkspaceId(req)
     const data = quoteUpdateSchema.parse(req.body)
     const quote = await prisma.quote.update({
-      where: { id: req.params.id },
+      where: { id: req.params.id, workspaceId },
       data: {
         ...data,
         subtotal: data.subtotal == null ? data.subtotal : data.subtotal.toString(),
@@ -93,7 +128,8 @@ quotesRouter.patch('/:id', async (req, res, next) => {
 
 quotesRouter.delete('/:id', async (req, res, next) => {
   try {
-    await prisma.quote.delete({ where: { id: req.params.id } })
+    const workspaceId = getWorkspaceId(req)
+    await prisma.quote.delete({ where: { id: req.params.id, workspaceId } })
     res.status(204).send()
   } catch (error) {
     next(error)

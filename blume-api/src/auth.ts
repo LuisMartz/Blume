@@ -1,5 +1,6 @@
 import { pbkdf2Sync, randomBytes, timingSafeEqual, createHash } from 'node:crypto'
-import type { Request } from 'express'
+import type { NextFunction, Request, Response } from 'express'
+import type { User, WorkspaceMember } from '@prisma/client'
 import { prisma } from './prisma.js'
 
 const iterations = 120_000
@@ -82,4 +83,46 @@ export async function getUserFromRequest(req: Request) {
   }
 
   return session.user
+}
+
+export type AuthenticatedRequest = Request & {
+  user: User
+  workspaceId: string
+  membership: WorkspaceMember
+}
+
+export function getAuthUser(req: Request) {
+  return (req as unknown as AuthenticatedRequest).user
+}
+
+export function getWorkspaceId(req: Request) {
+  return (req as unknown as AuthenticatedRequest).workspaceId
+}
+
+export async function requireAuth(req: Request, res: Response, next: NextFunction) {
+  try {
+    const user = await getUserFromRequest(req)
+
+    if (!user) {
+      res.status(401).json({ message: 'No autenticado' })
+      return
+    }
+
+    const membership = await prisma.workspaceMember.findFirst({
+      where: { userId: user.id },
+      orderBy: { createdAt: 'asc' },
+    })
+
+    if (!membership) {
+      res.status(403).json({ message: 'El usuario no pertenece a ningún espacio de trabajo' })
+      return
+    }
+
+    ;(req as AuthenticatedRequest).user = user
+    ;(req as AuthenticatedRequest).workspaceId = membership.workspaceId
+    ;(req as AuthenticatedRequest).membership = membership
+    next()
+  } catch (error) {
+    next(error)
+  }
 }

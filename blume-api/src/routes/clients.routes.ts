@@ -1,12 +1,16 @@
 import { Router } from 'express'
+import { getWorkspaceId, requireAuth } from '../auth.js'
 import { prisma } from '../prisma.js'
 import { clientCreateSchema, clientUpdateSchema } from '../validators/client.schema.js'
 
 export const clientsRouter = Router()
+clientsRouter.use(requireAuth)
 
-clientsRouter.get('/', async (_req, res, next) => {
+clientsRouter.get('/', async (req, res, next) => {
   try {
+    const workspaceId = getWorkspaceId(req)
     const clients = await prisma.client.findMany({
+      where: { workspaceId },
       orderBy: { createdAt: 'desc' },
       include: { _count: { select: { quotes: true } } },
     })
@@ -19,8 +23,9 @@ clientsRouter.get('/', async (_req, res, next) => {
 
 clientsRouter.get('/:id', async (req, res, next) => {
   try {
+    const workspaceId = getWorkspaceId(req)
     const client = await prisma.client.findUnique({
-      where: { id: req.params.id },
+      where: { id: req.params.id, workspaceId },
       include: { quotes: { orderBy: { createdAt: 'desc' } } },
     })
 
@@ -37,10 +42,12 @@ clientsRouter.get('/:id', async (req, res, next) => {
 
 clientsRouter.post('/', async (req, res, next) => {
   try {
+    const workspaceId = getWorkspaceId(req)
     const data = clientCreateSchema.parse(req.body)
     const client = await prisma.client.create({
       data: {
         ...data,
+        workspaceId,
         value: data.value == null ? null : data.value.toString(),
       },
     })
@@ -53,9 +60,10 @@ clientsRouter.post('/', async (req, res, next) => {
 
 clientsRouter.patch('/:id', async (req, res, next) => {
   try {
+    const workspaceId = getWorkspaceId(req)
     const data = clientUpdateSchema.parse(req.body)
     const client = await prisma.client.update({
-      where: { id: req.params.id },
+      where: { id: req.params.id, workspaceId },
       data: {
         ...data,
         value: data.value == null ? data.value : data.value.toString(),
@@ -70,7 +78,8 @@ clientsRouter.patch('/:id', async (req, res, next) => {
 
 clientsRouter.delete('/:id', async (req, res, next) => {
   try {
-    await prisma.client.delete({ where: { id: req.params.id } })
+    const workspaceId = getWorkspaceId(req)
+    await prisma.client.delete({ where: { id: req.params.id, workspaceId } })
     res.status(204).send()
   } catch (error) {
     next(error)

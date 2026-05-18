@@ -1,7 +1,7 @@
 const badgeStyles = {
-  active: 'bg-emerald-50 text-emerald-700 ring-emerald-200',
+  active: 'bg-[var(--brand-soft)] text-[var(--brand-deep)] ring-emerald-200',
   pending: 'bg-amber-50 text-amber-700 ring-amber-200',
-  neutral: 'bg-slate-100 text-slate-700 ring-slate-200',
+  neutral: 'bg-slate-100 text-slate-600 ring-slate-200',
   danger: 'bg-rose-50 text-rose-700 ring-rose-200',
 }
 
