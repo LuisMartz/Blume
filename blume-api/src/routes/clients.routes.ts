@@ -24,9 +24,18 @@ clientsRouter.get('/', async (req, res, next) => {
 clientsRouter.get('/:id', async (req, res, next) => {
   try {
     const workspaceId = getWorkspaceId(req)
-    const client = await prisma.client.findUnique({
+    const client = await prisma.client.findFirst({
       where: { id: req.params.id, workspaceId },
-      include: { quotes: { orderBy: { createdAt: 'desc' } } },
+      include: {
+        quotes: {
+          orderBy: { createdAt: 'desc' },
+          include: { items: true, client: true },
+        },
+        tasks: {
+          orderBy: [{ status: 'asc' }, { dueDate: 'asc' }],
+          include: { quote: true },
+        },
+      },
     })
 
     if (!client) {

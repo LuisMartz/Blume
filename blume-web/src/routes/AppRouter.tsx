@@ -2,6 +2,7 @@ import { createBrowserRouter, RouterProvider } from 'react-router-dom'
 import { AuthLayout } from '../layouts/AuthLayout'
 import { AppLayout } from '../layouts/AppLayout'
 import { CatalogPage } from '../pages/CatalogPage'
+import { ClientDetailPage } from '../pages/ClientDetailPage'
 import { ClientsPage } from '../pages/ClientsPage'
 import { DashboardPage } from '../pages/DashboardPage'
 import { LoginPage } from '../pages/LoginPage'
@@ -34,6 +35,10 @@ const router = createBrowserRouter([
               {
                 path: 'clients',
                 element: <ClientsPage />,
+              },
+              {
+                path: 'clients/:id',
+                element: <ClientDetailPage />,
               },
               {
                 path: 'catalog',

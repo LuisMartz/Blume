@@ -1,6 +1,7 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Edit2, Mail, Phone, Search, Trash2 } from 'lucide-react'
+import { Edit2, Eye, Mail, Phone, Search, Trash2 } from 'lucide-react'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { clientStatusLabel, formatCurrency } from '../api/format'
 import { createClient, deleteClient, getClients, updateClient } from '../api/queries/clients'
 import type { Client, ClientStatus } from '../api/types'
@@ -32,6 +33,8 @@ function clientPayload(formData: FormData) {
 }
 
 export function ClientsPage() {
+  const location = useLocation()
+  const navigate = useNavigate()
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editingClient, setEditingClient] = useState<Client | null>(null)
   const [search, setSearch] = useState('')
@@ -80,6 +83,14 @@ export function ClientsPage() {
       return matchesStatus && matchesSearch
     })
   }, [clients, search, status])
+
+  useEffect(() => {
+    if ((location.state as { openCreate?: boolean } | null)?.openCreate) {
+      setEditingClient(null)
+      setIsModalOpen(true)
+      navigate(location.pathname, { replace: true, state: null })
+    }
+  }, [location.pathname, location.state, navigate])
 
   const closeModal = () => {
     setIsModalOpen(false)
@@ -138,6 +149,15 @@ export function ClientsPage() {
                 </div>
                 <div className="flex shrink-0 items-center gap-2">
                   <Badge tone={clientStatusTone(client.status)}>{clientStatusLabel(client.status)}</Badge>
+                  <button
+                    type="button"
+                    className="grid size-9 place-items-center rounded-md border border-slate-200 text-slate-600 transition hover:bg-slate-50"
+                    aria-label={`Ver ${client.name}`}
+                    title="Ver detalle"
+                    onClick={() => navigate(`/clients/${client.id}`)}
+                  >
+                    <Eye className="size-4" aria-hidden="true" />
+                  </button>
                   <button
                     type="button"
                     className="grid size-9 place-items-center rounded-md border border-slate-200 text-slate-600 transition hover:bg-slate-50"

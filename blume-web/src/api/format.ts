@@ -1,4 +1,4 @@
-import type { CatalogStatus, ClientStatus, QuoteStatus } from './types'
+import type { CatalogStatus, ClientStatus, QuoteStatus, TaskPriority, TaskStatus } from './types'
 
 const currencyFormatter = new Intl.NumberFormat('es-ES', {
   style: 'currency',
@@ -57,4 +57,24 @@ export function quoteStatusLabel(status: QuoteStatus) {
   }
 
   return labels[status]
+}
+
+export function taskStatusLabel(status: TaskStatus) {
+  const labels: Record<TaskStatus, string> = {
+    PENDING: 'Pendiente',
+    IN_PROGRESS: 'En curso',
+    DONE: 'Completada',
+  }
+
+  return labels[status]
+}
+
+export function taskPriorityLabel(priority: TaskPriority) {
+  const labels: Record<TaskPriority, string> = {
+    LOW: 'Baja',
+    MEDIUM: 'Media',
+    HIGH: 'Alta',
+  }
+
+  return labels[priority]
 }

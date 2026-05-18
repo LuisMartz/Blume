@@ -1,4 +1,4 @@
-import { CatalogStatus, ClientStatus, PrismaClient, QuoteStatus } from '@prisma/client'
+import { CatalogStatus, ClientStatus, PrismaClient, QuoteStatus, TaskPriority, TaskStatus } from '@prisma/client'
 
 const toDecimalString = (value: number) => value.toFixed(2)
 
@@ -167,7 +167,7 @@ export async function seedWorkspace(prisma: PrismaClient, workspaceId: string) {
     })
   }
 
-  await Promise.all([
+  const [brumaQuote, norteQuote, verdeQuote, lantiaQuote] = await Promise.all([
     createQuote({
       code: `BL-${workspaceId.slice(-6)}-018`,
       clientId: bruma.id,
@@ -205,6 +205,60 @@ export async function seedWorkspace(prisma: PrismaClient, workspaceId: string) {
       lines: [
         { catalogItemId: consulting.id, name: consulting.name, description: 'Consultoría inicial para definir prioridades.', quantity: 1, unitPrice: 450 },
       ],
+    }),
+  ])
+
+  const today = new Date()
+  const tomorrow = new Date(today)
+  tomorrow.setDate(tomorrow.getDate() + 1)
+  const nextWeek = new Date(today)
+  nextWeek.setDate(nextWeek.getDate() + 7)
+
+  await Promise.all([
+    prisma.task.create({
+      data: {
+        workspaceId,
+        clientId: bruma.id,
+        quoteId: brumaQuote.id,
+        title: 'Llamar para resolver dudas del presupuesto',
+        description: 'Confirmar alcance y fecha de inicio.',
+        dueDate: today,
+        priority: TaskPriority.HIGH,
+        status: TaskStatus.PENDING,
+      },
+    }),
+    prisma.task.create({
+      data: {
+        workspaceId,
+        clientId: verde.id,
+        quoteId: verdeQuote.id,
+        title: 'Enviar revision con SEO ajustado',
+        dueDate: tomorrow,
+        priority: TaskPriority.MEDIUM,
+        status: TaskStatus.IN_PROGRESS,
+      },
+    }),
+    prisma.task.create({
+      data: {
+        workspaceId,
+        clientId: norte.id,
+        quoteId: norteQuote.id,
+        title: 'Preparar onboarding de mantenimiento',
+        dueDate: nextWeek,
+        priority: TaskPriority.LOW,
+        status: TaskStatus.PENDING,
+      },
+    }),
+    prisma.task.create({
+      data: {
+        workspaceId,
+        clientId: lantia.id,
+        quoteId: lantiaQuote.id,
+        title: 'Revisar borrador interno',
+        dueDate: today,
+        priority: TaskPriority.HIGH,
+        status: TaskStatus.PENDING,
+      },
     }),
   ])
 }

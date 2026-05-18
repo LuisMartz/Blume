@@ -14,6 +14,7 @@ function hashPassword(password: string) {
 
 async function main() {
   await prisma.quoteItem.deleteMany()
+  await prisma.task.deleteMany()
   await prisma.quote.deleteMany()
   await prisma.catalogItem.deleteMany()
   await prisma.client.deleteMany()

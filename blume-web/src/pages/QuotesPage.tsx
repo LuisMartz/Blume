@@ -1,7 +1,7 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Download, Eye, Search, Send, Trash2 } from 'lucide-react'
-import { useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { formatCurrency, formatDate, quoteStatusLabel } from '../api/format'
 import { getCatalogItems } from '../api/queries/catalog'
 import { getClients } from '../api/queries/clients'
@@ -45,6 +45,7 @@ function downloadQuote(quote: Quote) {
 }
 
 export function QuotesPage() {
+  const location = useLocation()
   const navigate = useNavigate()
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [selectedQuote, setSelectedQuote] = useState<Quote | null>(null)
@@ -95,6 +96,13 @@ export function QuotesPage() {
       return matchesStatus && matchesSearch
     })
   }, [quotes, search, status])
+
+  useEffect(() => {
+    if ((location.state as { openCreate?: boolean } | null)?.openCreate) {
+      setIsModalOpen(true)
+      navigate(location.pathname, { replace: true, state: null })
+    }
+  }, [location.pathname, location.state, navigate])
 
   return (
     <div>

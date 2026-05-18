@@ -1,5 +1,5 @@
 import { http } from '../http'
-import type { Client } from '../types'
+import type { Client, ClientDetail } from '../types'
 
 export type CreateClientInput = {
   name: string
@@ -16,6 +16,11 @@ export type CreateClientInput = {
 
 export async function getClients() {
   const { data } = await http.get<Client[]>('/clients')
+  return data
+}
+
+export async function getClient(id: string) {
+  const { data } = await http.get<ClientDetail>(`/clients/${id}`)
   return data
 }
 

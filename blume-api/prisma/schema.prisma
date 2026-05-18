@@ -33,6 +33,18 @@ enum WorkspaceRole {
   MEMBER
 }
 
+enum TaskStatus {
+  PENDING
+  IN_PROGRESS
+  DONE
+}
+
+enum TaskPriority {
+  LOW
+  MEDIUM
+  HIGH
+}
+
 model User {
   id           String    @id @default(cuid())
   name         String
@@ -61,6 +73,7 @@ model Workspace {
   clients      Client[]
   catalogItems CatalogItem[]
   quotes       Quote[]
+  tasks        Task[]
 
   @@index([isDemo])
 }
@@ -112,6 +125,7 @@ model Client {
 
   workspace  Workspace    @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   quotes     Quote[]
+  tasks      Task[]
 
   @@index([workspaceId])
   @@index([name])
@@ -162,6 +176,7 @@ model Quote {
   workspace  Workspace   @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   client     Client      @relation(fields: [clientId], references: [id], onDelete: Cascade)
   items      QuoteItem[]
+  tasks      Task[]
 
   @@index([workspaceId])
   @@index([clientId])
@@ -185,4 +200,28 @@ model QuoteItem {
 
   @@index([quoteId])
   @@index([catalogItemId])
+}
+
+model Task {
+  id          String       @id @default(cuid())
+  workspaceId String
+  clientId    String?
+  quoteId     String?
+  title       String
+  description String?
+  dueDate     DateTime?
+  priority    TaskPriority @default(MEDIUM)
+  status      TaskStatus   @default(PENDING)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  workspace   Workspace    @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  client      Client?      @relation(fields: [clientId], references: [id], onDelete: SetNull)
+  quote       Quote?       @relation(fields: [quoteId], references: [id], onDelete: SetNull)
+
+  @@index([workspaceId])
+  @@index([clientId])
+  @@index([quoteId])
+  @@index([status])
+  @@index([dueDate])
 }
