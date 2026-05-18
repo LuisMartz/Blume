@@ -11,15 +11,26 @@ dotenv.config()
 
 const app = express()
 const port = Number(process.env.PORT ?? 4000)
+const configuredOrigins = (process.env.WEB_ORIGIN ?? '')
+  .split(',')
+  .map((origin) => origin.trim())
+  .filter(Boolean)
 const allowedOrigins = [
-  process.env.WEB_ORIGIN,
+  ...configuredOrigins,
   'http://127.0.0.1:5173',
   'http://localhost:5173',
-].filter((origin): origin is string => Boolean(origin))
+]
 
 app.use(
   cors({
-    origin: allowedOrigins,
+    origin(origin, callback) {
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true)
+        return
+      }
+
+      callback(new Error(`Origin ${origin} is not allowed by CORS`))
+    },
   }),
 )
 app.use(express.json())
