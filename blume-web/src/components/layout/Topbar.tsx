@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { Bell, LogOut, Plus, Search } from 'lucide-react'
 import { NavLink, useLocation, useNavigate } from 'react-router-dom'
 import { clearSession, getStoredUser } from '../../api/session'
@@ -7,6 +8,7 @@ import { BlumeLogo } from '../brand/BlumeLogo'
 export function Topbar() {
   const location = useLocation()
   const navigate = useNavigate()
+  const [query, setQuery] = useState('')
   const user = getStoredUser()
   const active = navigation.find((item) => location.pathname.startsWith(item.href))
   const title = active?.name ?? 'Panel'
@@ -31,23 +33,39 @@ export function Topbar() {
         </div>
 
         <div className="ml-auto flex items-center gap-2">
-          <div className="relative hidden md:block">
+          <form
+            className="relative hidden md:block"
+            onSubmit={(event) => {
+              event.preventDefault()
+              if (query.trim()) {
+                navigate('/clients')
+              }
+            }}
+          >
             <Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
             <input
               className="h-9 w-72 rounded-md border border-[var(--border)] bg-white pl-8 pr-3 text-sm outline-none transition placeholder:text-slate-400 focus:border-[var(--brand)] focus:ring-2 focus:ring-emerald-100"
               placeholder="Buscar clientes, presupuestos..."
               type="search"
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
             />
-          </div>
+          </form>
           <button
             type="button"
             className="grid h-9 w-9 place-items-center rounded-md text-slate-500 transition hover:bg-white"
-            aria-label="Notificaciones"
+            aria-label="Ver tareas"
+            title="Ver tareas"
+            onClick={() => navigate('/tasks')}
           >
             <Bell className="h-4 w-4" aria-hidden="true" />
           </button>
-          <button className="hidden h-9 items-center gap-1 rounded-md bg-[var(--brand)] px-3 text-sm font-medium text-white sm:inline-flex">
-            <Plus className="h-4 w-4" />
+          <button
+            type="button"
+            className="hidden h-9 items-center gap-1 rounded-md bg-[var(--brand)] px-3 text-sm font-medium text-white sm:inline-flex"
+            onClick={() => navigate('/quotes')}
+          >
+            <Plus className="h-4 w-4" aria-hidden="true" />
             Crear
           </button>
           {user?.isDemo ? (
@@ -61,7 +79,8 @@ export function Topbar() {
           <button
             type="button"
             className="grid h-9 w-9 place-items-center rounded-md text-slate-500 transition hover:bg-white"
-            aria-label="Cerrar sesión"
+            aria-label="Cerrar sesion"
+            title="Cerrar sesion"
             onClick={() => {
               clearSession()
               navigate('/login')

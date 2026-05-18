@@ -1,9 +1,9 @@
 import { useMemo, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Search } from 'lucide-react'
+import { Edit2, Search, Trash2 } from 'lucide-react'
 import { catalogStatusLabel, formatCurrency } from '../api/format'
-import { createCatalogItem, getCatalogItems } from '../api/queries/catalog'
-import type { CatalogStatus } from '../api/types'
+import { createCatalogItem, deleteCatalogItem, getCatalogItems, updateCatalogItem } from '../api/queries/catalog'
+import type { CatalogItem, CatalogStatus } from '../api/types'
 import { Badge } from '../components/ui/Badge'
 import { Card } from '../components/ui/Card'
 import { Modal } from '../components/ui/Modal'
@@ -16,8 +16,21 @@ function catalogStatusTone(status: CatalogStatus) {
   return 'pending'
 }
 
+function catalogPayload(formData: FormData) {
+  return {
+    name: String(formData.get('name')),
+    description: String(formData.get('description') || ''),
+    category: String(formData.get('category')),
+    unit: String(formData.get('unit') || 'unidad'),
+    price: Number(formData.get('price') || 0),
+    margin: Number(formData.get('margin') || 0),
+    status: formData.get('status') as CatalogStatus,
+  }
+}
+
 export function CatalogPage() {
   const [isModalOpen, setIsModalOpen] = useState(false)
+  const [editingItem, setEditingItem] = useState<CatalogItem | null>(null)
   const [search, setSearch] = useState('')
   const [category, setCategory] = useState('ALL')
   const queryClient = useQueryClient()
@@ -25,6 +38,7 @@ export function CatalogPage() {
     queryKey: ['catalog'],
     queryFn: getCatalogItems,
   })
+
   const createMutation = useMutation({
     mutationFn: createCatalogItem,
     onSuccess: () => {
@@ -32,6 +46,22 @@ export function CatalogPage() {
       setIsModalOpen(false)
     },
   })
+  const updateMutation = useMutation({
+    mutationFn: ({ id, data }: { id: string; data: ReturnType<typeof catalogPayload> }) =>
+      updateCatalogItem(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['catalog'] })
+      setIsModalOpen(false)
+      setEditingItem(null)
+    },
+  })
+  const deleteMutation = useMutation({
+    mutationFn: deleteCatalogItem,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['catalog'] })
+    },
+  })
+
   const categories = useMemo(
     () => Array.from(new Set(catalogItems.map((item) => item.category))),
     [catalogItems],
@@ -51,13 +81,21 @@ export function CatalogPage() {
     })
   }, [catalogItems, category, search])
 
+  const closeModal = () => {
+    setIsModalOpen(false)
+    setEditingItem(null)
+  }
+
   return (
     <div>
       <PageHeader
-        title="Catálogo"
-        description="Servicios y tarifas usados para crear presupuestos consistentes y rápidos."
+        title="Catalogo"
+        description="Servicios y tarifas usados para crear presupuestos consistentes y rapidos."
         action="Nuevo servicio"
-        onAction={() => setIsModalOpen(true)}
+        onAction={() => {
+          setEditingItem(null)
+          setIsModalOpen(true)
+        }}
       />
 
       <Card>
@@ -77,29 +115,30 @@ export function CatalogPage() {
             onChange={(event) => setCategory(event.target.value)}
             value={category}
           >
-            <option value="ALL">Todas las categorías</option>
+            <option value="ALL">Todas las categorias</option>
             {categories.map((itemCategory) => (
               <option key={itemCategory} value={itemCategory}>{itemCategory}</option>
             ))}
           </select>
         </div>
         {isLoading ? (
-          <div className="p-4"><StateBlock title="Cargando catálogo" description="Leyendo servicios desde Neon." /></div>
+          <div className="p-4"><StateBlock title="Cargando catalogo" description="Leyendo servicios desde Neon." /></div>
         ) : isError ? (
-          <div className="p-4"><StateBlock title="No se pudo cargar el catálogo" description="Comprueba que blume-api esté arrancada en el puerto 4000." /></div>
+          <div className="p-4"><StateBlock title="No se pudo cargar el catalogo" description="Comprueba que blume-api este arrancada en el puerto 4000." /></div>
         ) : filteredItems.length === 0 ? (
           <div className="p-4"><StateBlock title="Sin resultados" description="Ajusta los filtros o añade un nuevo servicio." /></div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[700px] text-left text-sm">
+            <table className="w-full min-w-[760px] text-left text-sm">
               <thead className="bg-slate-50 text-xs uppercase text-slate-500">
                 <tr>
                   <th className="px-4 py-3 font-medium sm:px-5">Nombre</th>
-                  <th className="px-4 py-3 font-medium sm:px-5">Categoría</th>
+                  <th className="px-4 py-3 font-medium sm:px-5">Categoria</th>
                   <th className="px-4 py-3 font-medium sm:px-5">Unidad</th>
                   <th className="px-4 py-3 font-medium sm:px-5">Precio</th>
                   <th className="px-4 py-3 font-medium sm:px-5">Margen</th>
                   <th className="px-4 py-3 font-medium sm:px-5">Estado</th>
+                  <th className="px-4 py-3 text-right font-medium sm:px-5">Acciones</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -116,6 +155,36 @@ export function CatalogPage() {
                     <td className="px-4 py-4 sm:px-5">
                       <Badge tone={catalogStatusTone(item.status)}>{catalogStatusLabel(item.status)}</Badge>
                     </td>
+                    <td className="px-4 py-4 sm:px-5">
+                      <div className="flex justify-end gap-2">
+                        <button
+                          type="button"
+                          className="grid size-9 place-items-center rounded-md border border-slate-200 text-slate-600 transition hover:bg-slate-50"
+                          aria-label={`Editar ${item.name}`}
+                          title="Editar servicio"
+                          onClick={() => {
+                            setEditingItem(item)
+                            setIsModalOpen(true)
+                          }}
+                        >
+                          <Edit2 className="size-4" aria-hidden="true" />
+                        </button>
+                        <button
+                          type="button"
+                          className="grid size-9 place-items-center rounded-md border border-slate-200 text-rose-600 transition hover:bg-rose-50 disabled:opacity-50"
+                          aria-label={`Eliminar ${item.name}`}
+                          title="Eliminar servicio"
+                          disabled={deleteMutation.isPending}
+                          onClick={() => {
+                            if (window.confirm(`Eliminar ${item.name}? Los presupuestos conservaran el nombre y precio ya guardados.`)) {
+                              deleteMutation.mutate(item.id)
+                            }
+                          }}
+                        >
+                          <Trash2 className="size-4" aria-hidden="true" />
+                        </button>
+                      </div>
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -124,60 +193,59 @@ export function CatalogPage() {
         )}
       </Card>
 
-      <Modal title="Nuevo servicio" open={isModalOpen} onClose={() => setIsModalOpen(false)}>
+      <Modal title={editingItem ? 'Editar servicio' : 'Nuevo servicio'} open={isModalOpen} onClose={closeModal}>
         <form
+          key={editingItem?.id ?? 'new-catalog-item'}
           className="grid gap-4 sm:grid-cols-2"
           onSubmit={(event) => {
             event.preventDefault()
-            const formData = new FormData(event.currentTarget)
-            createMutation.mutate({
-              name: String(formData.get('name')),
-              description: String(formData.get('description') || ''),
-              category: String(formData.get('category')),
-              unit: String(formData.get('unit') || 'unidad'),
-              price: Number(formData.get('price') || 0),
-              margin: Number(formData.get('margin') || 0),
-              status: formData.get('status') as CatalogStatus,
-            })
+            const payload = catalogPayload(new FormData(event.currentTarget))
+
+            if (editingItem) {
+              updateMutation.mutate({ id: editingItem.id, data: payload })
+              return
+            }
+
+            createMutation.mutate(payload)
           }}
         >
           <label className="sm:col-span-2">
             <span className="text-sm font-medium text-slate-700">Nombre</span>
-            <input className="mt-2 h-10 w-full rounded-md border border-slate-200 px-3 text-sm outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100" name="name" required />
+            <input className="mt-2 h-10 w-full rounded-md border border-slate-200 px-3 text-sm outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100" name="name" defaultValue={editingItem?.name ?? ''} required />
           </label>
           <label className="sm:col-span-2">
-            <span className="text-sm font-medium text-slate-700">Descripción</span>
-            <textarea className="mt-2 min-h-20 w-full rounded-md border border-slate-200 px-3 py-2 text-sm outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100" name="description" />
+            <span className="text-sm font-medium text-slate-700">Descripcion</span>
+            <textarea className="mt-2 min-h-20 w-full rounded-md border border-slate-200 px-3 py-2 text-sm outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100" name="description" defaultValue={editingItem?.description ?? ''} />
           </label>
           <label>
-            <span className="text-sm font-medium text-slate-700">Categoría</span>
-            <input className="mt-2 h-10 w-full rounded-md border border-slate-200 px-3 text-sm outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100" name="category" required />
+            <span className="text-sm font-medium text-slate-700">Categoria</span>
+            <input className="mt-2 h-10 w-full rounded-md border border-slate-200 px-3 text-sm outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100" name="category" defaultValue={editingItem?.category ?? ''} required />
           </label>
           <label>
             <span className="text-sm font-medium text-slate-700">Unidad</span>
-            <input className="mt-2 h-10 w-full rounded-md border border-slate-200 px-3 text-sm outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100" name="unit" defaultValue="unidad" />
+            <input className="mt-2 h-10 w-full rounded-md border border-slate-200 px-3 text-sm outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100" name="unit" defaultValue={editingItem?.unit ?? 'unidad'} />
           </label>
           <label>
             <span className="text-sm font-medium text-slate-700">Precio</span>
-            <input className="mt-2 h-10 w-full rounded-md border border-slate-200 px-3 text-sm outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100" min="0" name="price" required step="0.01" type="number" />
+            <input className="mt-2 h-10 w-full rounded-md border border-slate-200 px-3 text-sm outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100" min="0" name="price" required step="0.01" type="number" defaultValue={editingItem?.price ?? ''} />
           </label>
           <label>
             <span className="text-sm font-medium text-slate-700">Margen %</span>
-            <input className="mt-2 h-10 w-full rounded-md border border-slate-200 px-3 text-sm outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100" min="0" max="100" name="margin" type="number" />
+            <input className="mt-2 h-10 w-full rounded-md border border-slate-200 px-3 text-sm outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100" min="0" max="100" name="margin" type="number" defaultValue={editingItem?.margin ?? ''} />
           </label>
           <label>
             <span className="text-sm font-medium text-slate-700">Estado</span>
-            <select className="mt-2 h-10 w-full rounded-md border border-slate-200 px-3 text-sm outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100" name="status" defaultValue="ACTIVE">
+            <select className="mt-2 h-10 w-full rounded-md border border-slate-200 px-3 text-sm outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100" name="status" defaultValue={editingItem?.status ?? 'ACTIVE'}>
               <option value="ACTIVE">Activo</option>
               <option value="DRAFT">Borrador</option>
               <option value="ARCHIVED">Archivado</option>
             </select>
           </label>
-          {createMutation.isError ? <p className="sm:col-span-2 text-sm text-rose-700">No se pudo crear el servicio.</p> : null}
+          {createMutation.isError || updateMutation.isError ? <p className="sm:col-span-2 text-sm text-rose-700">No se pudo guardar el servicio.</p> : null}
           <div className="flex justify-end gap-2 sm:col-span-2">
-            <button className="h-10 rounded-md border border-slate-200 px-4 text-sm font-medium text-slate-700" type="button" onClick={() => setIsModalOpen(false)}>Cancelar</button>
-            <button className="h-10 rounded-md bg-emerald-600 px-4 text-sm font-medium text-white disabled:opacity-70" disabled={createMutation.isPending} type="submit">
-              {createMutation.isPending ? 'Guardando...' : 'Guardar servicio'}
+            <button className="h-10 rounded-md border border-slate-200 px-4 text-sm font-medium text-slate-700" type="button" onClick={closeModal}>Cancelar</button>
+            <button className="h-10 rounded-md bg-emerald-600 px-4 text-sm font-medium text-white disabled:opacity-70" disabled={createMutation.isPending || updateMutation.isPending} type="submit">
+              {createMutation.isPending || updateMutation.isPending ? 'Guardando...' : 'Guardar servicio'}
             </button>
           </div>
         </form>

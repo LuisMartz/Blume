@@ -20,3 +20,12 @@ export async function createCatalogItem(input: CreateCatalogItemInput) {
   const { data } = await http.post<CatalogItem>('/catalog', input)
   return data
 }
+
+export async function updateCatalogItem(id: string, input: Partial<CreateCatalogItemInput>) {
+  const { data } = await http.patch<CatalogItem>(`/catalog/${id}`, input)
+  return data
+}
+
+export async function deleteCatalogItem(id: string) {
+  await http.delete(`/catalog/${id}`)
+}

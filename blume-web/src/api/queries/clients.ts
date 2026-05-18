@@ -23,3 +23,12 @@ export async function createClient(input: CreateClientInput) {
   const { data } = await http.post<Client>('/clients', input)
   return data
 }
+
+export async function updateClient(id: string, input: Partial<CreateClientInput>) {
+  const { data } = await http.patch<Client>(`/clients/${id}`, input)
+  return data
+}
+
+export async function deleteClient(id: string) {
+  await http.delete(`/clients/${id}`)
+}
