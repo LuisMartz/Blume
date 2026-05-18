@@ -1,0 +1,10 @@
+node_modules
+dist
+.env
+*.log
+
+blume-api/node_modules
+blume-api/dist
+blume-api/.env
+blume-web/node_modules
+blume-web/dist
