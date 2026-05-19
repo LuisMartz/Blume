@@ -16,11 +16,17 @@ dashboardRouter.get('/', async (req, res, next) => {
     const tomorrow = new Date(today)
     tomorrow.setDate(tomorrow.getDate() + 1)
 
-    const [clients, quotes, tasks] = await Promise.all([
+    const [clients, recentClients, quotes, recentQuotes, tasks] = await Promise.all([
+      prisma.client.findMany({
+        where: { workspaceId },
+      }),
       prisma.client.findMany({
         where: { workspaceId },
         orderBy: { createdAt: 'desc' },
         take: 8,
+      }),
+      prisma.quote.findMany({
+        where: { workspaceId },
       }),
       prisma.quote.findMany({
         where: { workspaceId },
@@ -44,7 +50,7 @@ dashboardRouter.get('/', async (req, res, next) => {
     const dueToday = tasks.filter((task) => task.dueDate && task.dueDate >= today && task.dueDate < tomorrow && task.status !== TaskStatus.DONE).length
     const urgentTasks = tasks.filter((task) => task.priority === 'HIGH' && task.status !== TaskStatus.DONE).length
 
-    const quoteActivity = quotes.slice(0, 6).map((quote) => ({
+    const quoteActivity = recentQuotes.slice(0, 6).map((quote) => ({
       id: quote.id,
       client: quote.client.name,
       movement: quote.status === QuoteStatus.ACCEPTED ? 'Acepto propuesta' : quote.status === QuoteStatus.SENT ? 'Presupuesto enviado' : quote.status === QuoteStatus.REVISION ? 'Revision solicitada' : 'Presupuesto actualizado',
@@ -52,7 +58,7 @@ dashboardRouter.get('/', async (req, res, next) => {
       status: quote.status,
       date: quote.updatedAt,
     }))
-    const clientActivity = clients.slice(0, 3).map((client) => ({
+    const clientActivity = recentClients.slice(0, 3).map((client) => ({
       id: client.id,
       client: client.name,
       movement: 'Cliente creado',

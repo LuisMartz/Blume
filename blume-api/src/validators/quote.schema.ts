@@ -26,9 +26,5 @@ export const quoteUpdateSchema = z.object({
   date: z.coerce.date().optional(),
   validUntil: z.coerce.date().optional().nullable(),
   status: z.enum(QuoteStatus).optional(),
-  subtotal: z.coerce.number().nonnegative().optional(),
-  taxRate: z.coerce.number().nonnegative().optional(),
-  taxAmount: z.coerce.number().nonnegative().optional(),
-  total: z.coerce.number().nonnegative().optional(),
   notes: z.string().trim().optional().nullable(),
 })

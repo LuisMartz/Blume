@@ -107,13 +107,7 @@ quotesRouter.patch('/:id', async (req, res, next) => {
     const data = quoteUpdateSchema.parse(req.body)
     const quote = await prisma.quote.update({
       where: { id: req.params.id, workspaceId },
-      data: {
-        ...data,
-        subtotal: data.subtotal == null ? data.subtotal : data.subtotal.toString(),
-        taxRate: data.taxRate == null ? data.taxRate : data.taxRate.toString(),
-        taxAmount: data.taxAmount == null ? data.taxAmount : data.taxAmount.toString(),
-        total: data.total == null ? data.total : data.total.toString(),
-      },
+      data,
       include: {
         client: true,
         items: true,

@@ -9,7 +9,7 @@ import { dashboardRouter } from './routes/dashboard.routes.js'
 import { quotesRouter } from './routes/quotes.routes.js'
 import { tasksRouter } from './routes/tasks.routes.js'
 
-dotenv.config({ override: true })
+dotenv.config()
 
 const app = express()
 const port = Number(process.env.PORT ?? 4000)
