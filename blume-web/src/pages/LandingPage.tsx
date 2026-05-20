@@ -136,6 +136,56 @@ export function LandingPage() {
           <QuotePreviewCard />
         </div>
       </section>
+
+      <footer className="bg-white">
+        <div className="mx-auto max-w-7xl px-6 py-10">
+          <div className="grid gap-8 border-b border-[var(--border)] pb-8 md:grid-cols-[1.2fr_2fr]">
+            <div>
+              <Link to="/" className="inline-flex items-center gap-2">
+                <BlumeLogo className="h-7 w-7" />
+                <span className="text-base font-semibold tracking-tight">Blume</span>
+              </Link>
+              <p className="mt-3 max-w-sm text-sm leading-6 text-slate-500">
+                Demo de gestion comercial para clientes, catalogo, presupuestos y tareas. Los datos se procesan a traves de API propia y base PostgreSQL.
+              </p>
+            </div>
+
+            <div className="grid gap-6 sm:grid-cols-3">
+              <div>
+                <h2 className="text-sm font-semibold text-slate-950">Cumplimiento</h2>
+                <ul className="mt-3 space-y-2 text-sm text-slate-500">
+                  <li><a className="transition hover:text-slate-950" href="#privacidad">Privacidad y RGPD</a></li>
+                  <li><a className="transition hover:text-slate-950" href="#cookies">Politica de cookies</a></li>
+                  <li><a className="transition hover:text-slate-950" href="#seguridad">Seguridad de datos</a></li>
+                </ul>
+              </div>
+              <div>
+                <h2 className="text-sm font-semibold text-slate-950">Legal</h2>
+                <ul className="mt-3 space-y-2 text-sm text-slate-500">
+                  <li><a className="transition hover:text-slate-950" href="#aviso-legal">Aviso legal</a></li>
+                  <li><a className="transition hover:text-slate-950" href="#terminos">Terminos de uso</a></li>
+                  <li><a className="transition hover:text-slate-950" href="mailto:legal@blume.local">legal@blume.local</a></li>
+                </ul>
+              </div>
+              <div>
+                <h2 className="text-sm font-semibold text-slate-950">Estado demo</h2>
+                <ul className="mt-3 space-y-2 text-sm text-slate-500">
+                  <li>Datos de ejemplo aislados por workspace.</li>
+                  <li>No introducir informacion sensible real.</li>
+                  <li>Revision legal pendiente antes de uso comercial.</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex flex-col gap-3 pt-6 text-xs text-slate-500 md:flex-row md:items-center md:justify-between">
+            <p>© {new Date().getFullYear()} Blume. Proyecto demo para portfolio.</p>
+            <p className="max-w-3xl">
+              Este sitio es una maqueta funcional. Las referencias a RGPD, privacidad, cookies y seguridad son una base informativa y deben revisarse juridicamente antes de operar con usuarios reales.
+            </p>
+          </div>
+        </div>
+      </footer>
     </main>
   )
 }
