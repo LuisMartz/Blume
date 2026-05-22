@@ -69,6 +69,7 @@ export type Quote = {
   updatedAt: string
   client: Client
   items: QuoteItem[]
+  tasks?: Task[]
 }
 
 export type Task = {
@@ -112,4 +113,19 @@ export type DashboardSummary = {
     revision: number
     closed: number
   }
+}
+
+export type WorkspaceSettings = {
+  id: string
+  workspaceId: string
+  companyName: string
+  taxId: string | null
+  address: string | null
+  city: string | null
+  postalCode: string | null
+  country: string
+  defaultTaxRate: string
+  currency: string
+  createdAt: string
+  updatedAt: string
 }

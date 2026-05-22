@@ -22,6 +22,11 @@ export async function getQuotes() {
   return data
 }
 
+export async function getQuote(id: string) {
+  const { data } = await http.get<Quote>(`/quotes/${id}`)
+  return data
+}
+
 export async function createQuote(input: CreateQuoteInput) {
   const { data } = await http.post<Quote>('/quotes', input)
   return data

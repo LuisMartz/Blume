@@ -18,6 +18,7 @@ async function main() {
   await prisma.quote.deleteMany()
   await prisma.catalogItem.deleteMany()
   await prisma.client.deleteMany()
+  await prisma.workspaceSettings.deleteMany()
   await prisma.session.deleteMany()
   await prisma.workspaceMember.deleteMany()
   await prisma.workspace.deleteMany()

@@ -7,6 +7,7 @@ import { ClientsPage } from '../pages/ClientsPage'
 import { DashboardPage } from '../pages/DashboardPage'
 import { LoginPage } from '../pages/LoginPage'
 import { LandingPage } from '../pages/LandingPage'
+import { QuoteDetailPage } from '../pages/QuoteDetailPage'
 import { QuotesPage } from '../pages/QuotesPage'
 import { RegisterPage } from '../pages/RegisterPage'
 import { ReportsPage } from '../pages/ReportsPage'
@@ -47,6 +48,10 @@ const router = createBrowserRouter([
               {
                 path: 'quotes',
                 element: <QuotesPage />,
+              },
+              {
+                path: 'quotes/:id',
+                element: <QuoteDetailPage />,
               },
               {
                 path: 'tasks',

@@ -24,6 +24,35 @@ quotesRouter.get('/', async (req, res, next) => {
   }
 })
 
+quotesRouter.get('/:id', async (req, res, next) => {
+  try {
+    const workspaceId = getWorkspaceId(req)
+    const quote = await prisma.quote.findFirst({
+      where: {
+        id: req.params.id,
+        workspaceId,
+      },
+      include: {
+        client: true,
+        items: true,
+        tasks: {
+          orderBy: [{ status: 'asc' }, { dueDate: 'asc' }],
+          include: { client: true },
+        },
+      },
+    })
+
+    if (!quote) {
+      res.status(404).json({ message: 'Presupuesto no encontrado' })
+      return
+    }
+
+    res.json(quote)
+  } catch (error) {
+    next(error)
+  }
+})
+
 quotesRouter.post('/', async (req, res, next) => {
   try {
     const workspaceId = getWorkspaceId(req)

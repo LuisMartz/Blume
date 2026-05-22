@@ -6,6 +6,7 @@ import { formatCurrency, formatDate, quoteStatusLabel } from '../api/format'
 import { getCatalogItems } from '../api/queries/catalog'
 import { getClients } from '../api/queries/clients'
 import { createQuote, deleteQuote, getQuotes, updateQuote } from '../api/queries/quotes'
+import { getSettings } from '../api/queries/settings'
 import type { Quote, QuoteStatus } from '../api/types'
 import { Badge } from '../components/ui/Badge'
 import { Card } from '../components/ui/Card'
@@ -59,6 +60,7 @@ export function QuotesPage() {
   })
   const { data: clients = [] } = useQuery({ queryKey: ['clients'], queryFn: getClients })
   const { data: catalogItems = [] } = useQuery({ queryKey: ['catalog'], queryFn: getCatalogItems })
+  const { data: settings } = useQuery({ queryKey: ['settings'], queryFn: getSettings })
   const selectedCatalogItem = catalogItems.find((item) => item.id === selectedCatalogItemId)
 
   const createMutation = useMutation({
@@ -164,7 +166,7 @@ export function QuotesPage() {
                     </td>
                     <td className="px-4 py-4 sm:px-5">
                       <div className="flex justify-end gap-2">
-                        <button type="button" className="grid size-9 place-items-center rounded-md border border-slate-200 text-slate-600 transition hover:bg-slate-50" aria-label="Ver presupuesto" title="Ver presupuesto" onClick={() => setSelectedQuote(quote)}>
+                        <button type="button" className="grid size-9 place-items-center rounded-md border border-slate-200 text-slate-600 transition hover:bg-slate-50" aria-label="Ver presupuesto" title="Ver presupuesto" onClick={() => navigate(`/quotes/${quote.id}`)}>
                           <Eye className="size-4" aria-hidden="true" />
                         </button>
                         <button type="button" className="grid size-9 place-items-center rounded-md border border-slate-200 text-slate-600 transition hover:bg-slate-50 disabled:opacity-50" aria-label="Marcar como enviado" title="Marcar como enviado" disabled={sendMutation.isPending || quote.status === 'SENT'} onClick={() => sendMutation.mutate(quote.id)}>
@@ -210,7 +212,7 @@ export function QuotesPage() {
               clientId: String(formData.get('clientId')),
               validUntil: String(formData.get('validUntil') || ''),
               status: formData.get('status') as QuoteStatus,
-              taxRate: Number(formData.get('taxRate') || 21),
+              taxRate: Number(formData.get('taxRate') || settings?.defaultTaxRate || 21),
               notes: String(formData.get('notes') || ''),
               items: [{
                 catalogItemId: catalogItem.id,
@@ -246,7 +248,7 @@ export function QuotesPage() {
           </label>
           <label>
             <span className="text-sm font-medium text-slate-700">IVA %</span>
-            <input className="mt-2 h-10 w-full rounded-md border border-slate-200 px-3 text-sm outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100" min="0" name="taxRate" defaultValue="21" step="0.01" type="number" />
+            <input className="mt-2 h-10 w-full rounded-md border border-slate-200 px-3 text-sm outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100" min="0" name="taxRate" defaultValue={settings?.defaultTaxRate ?? '21'} step="0.01" type="number" />
           </label>
           <label>
             <span className="text-sm font-medium text-slate-700">Validez</span>

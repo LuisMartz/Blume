@@ -1,12 +1,15 @@
 import cors from 'cors'
 import dotenv from 'dotenv'
 import express, { type ErrorRequestHandler } from 'express'
+import rateLimit from 'express-rate-limit'
+import helmet from 'helmet'
 import { ZodError } from 'zod'
 import { authRouter } from './routes/auth.routes.js'
 import { catalogRouter } from './routes/catalog.routes.js'
 import { clientsRouter } from './routes/clients.routes.js'
 import { dashboardRouter } from './routes/dashboard.routes.js'
 import { quotesRouter } from './routes/quotes.routes.js'
+import { settingsRouter } from './routes/settings.routes.js'
 import { tasksRouter } from './routes/tasks.routes.js'
 
 dotenv.config()
@@ -23,6 +26,7 @@ const allowedOrigins = [
   'http://localhost:5173',
 ]
 
+app.use(helmet())
 app.use(
   cors({
     origin(origin, callback) {
@@ -35,7 +39,15 @@ app.use(
     },
   }),
 )
-app.use(express.json())
+app.use(express.json({ limit: '1mb' }))
+app.use(
+  rateLimit({
+    windowMs: 15 * 60 * 1000,
+    limit: 100,
+    standardHeaders: true,
+    legacyHeaders: false,
+  }),
+)
 
 app.get('/api/health', (_req, res) => {
   res.json({ status: 'ok' })
@@ -46,6 +58,7 @@ app.use('/api/dashboard', dashboardRouter)
 app.use('/api/clients', clientsRouter)
 app.use('/api/catalog', catalogRouter)
 app.use('/api/quotes', quotesRouter)
+app.use('/api/settings', settingsRouter)
 app.use('/api/tasks', tasksRouter)
 
 const errorHandler: ErrorRequestHandler = (error, _req, res, _next) => {

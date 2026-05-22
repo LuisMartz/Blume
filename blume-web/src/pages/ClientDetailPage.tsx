@@ -99,7 +99,11 @@ export function ClientDetailPage() {
                 <tbody className="divide-y divide-slate-100">
                   {client.quotes.map((quote) => (
                     <tr key={quote.id}>
-                      <td className="px-5 py-4 font-medium">{quote.code}</td>
+                      <td className="px-5 py-4 font-medium">
+                        <Link className="text-[var(--brand-deep)] hover:underline" to={`/quotes/${quote.id}`}>
+                          {quote.code}
+                        </Link>
+                      </td>
                       <td className="px-5 py-4 text-slate-600">{formatDate(quote.date)}</td>
                       <td className="px-5 py-4 text-slate-600">{formatCurrency(quote.total)}</td>
                       <td className="px-5 py-4"><Badge tone={quote.status === 'ACCEPTED' ? 'active' : quote.status === 'REJECTED' ? 'danger' : 'pending'}>{quoteStatusLabel(quote.status)}</Badge></td>

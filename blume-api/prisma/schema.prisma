@@ -74,8 +74,28 @@ model Workspace {
   catalogItems CatalogItem[]
   quotes       Quote[]
   tasks        Task[]
+  settings     WorkspaceSettings?
 
   @@index([isDemo])
+}
+
+model WorkspaceSettings {
+  id             String    @id @default(cuid())
+  workspaceId    String    @unique
+  companyName    String
+  taxId          String?
+  address        String?
+  city           String?
+  postalCode     String?
+  country        String    @default("España")
+  defaultTaxRate Decimal   @default(21) @db.Decimal(5, 2)
+  currency       String    @default("EUR")
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  workspace      Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@index([workspaceId])
 }
 
 model WorkspaceMember {

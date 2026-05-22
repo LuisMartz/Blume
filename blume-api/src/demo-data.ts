@@ -3,6 +3,22 @@ import { CatalogStatus, ClientStatus, PrismaClient, QuoteStatus, TaskPriority, T
 const toDecimalString = (value: number) => value.toFixed(2)
 
 export async function seedWorkspace(prisma: PrismaClient, workspaceId: string) {
+  await prisma.workspaceSettings.upsert({
+    where: { workspaceId },
+    update: {},
+    create: {
+      workspaceId,
+      companyName: 'Demo Blume',
+      taxId: 'B00000000',
+      address: 'Calle Demo 12',
+      city: 'Madrid',
+      postalCode: '28001',
+      country: 'España',
+      defaultTaxRate: '21',
+      currency: 'EUR',
+    },
+  })
+
   const [bruma, norte, verde, lantia] = await Promise.all([
     prisma.client.create({
       data: {
